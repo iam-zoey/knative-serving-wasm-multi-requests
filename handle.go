@@ -5,30 +5,33 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 )
 
 // Handle HTTP requests (POST, GET)
 func Handle(w http.ResponseWriter, r *http.Request) {
 	var input string
+	var byteCount int64
 	var buf bytes.Buffer
+	var err error
 
 	switch r.Method {
+	// Read input from query parameter for GET requests
 	case http.MethodGet:
-		// Read input from query parameter for GET requests
 		input = r.URL.Query().Get("input")
+		byteCount = int64(len([]byte(input)))
+
+	// Copy input from request body for POST requests
 	case http.MethodPost:
-		// Copy input from request body for POST requests
-		_, err := io.Copy(&buf, r.Body)
+		byteCount, err = io.Copy(&buf, r.Body)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
-
 		defer r.Body.Close()
 
 		// Convert buffer to string
 		input = buf.String()
+
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -39,12 +42,13 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Write the input to the Wasmtime module's stdin
 	mu.Lock()
-	// fmt.Println("Sending to Wasmtime:", buf.Bytes())
-	// if _, err := stdinPipe.Write(buf.Bytes()); err != nil {
-	// if _, err := io.Copy(stdinPipe, &buf); err != nil {
-	if _, err := stdinPipe.Write([]byte(input + "\n")); err != nil {
+
+	data := fmt.Sprintf("%d %s\n", byteCount, input)
+	fmt.Println("Sending to Wasmtime:", data)
+
+	// Write the input to the Wasmtime module's stdin
+	if _, err := stdinPipe.Write([]byte(data)); err != nil {
 		http.Error(w, "Error writing to Wasmtime module", http.StatusInternalServerError)
 		mu.Unlock()
 		return
@@ -56,17 +60,16 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	stdoutBuf.Reset()
 	mu.Unlock()
 
-	// Wait for output from the Wasmtime module
-	time.Sleep(100 * time.Millisecond)
-	// mu.Lock()
-	// output := stdoutBuf.String()
-	// mu.Unlock()
-
 	output := waitForOutput()
-	// Respond to the HTTP request with the output from the Wasmtime module
+
+	// fmt.Println("Output from Wasmtime:", output) // optional print statement
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(output))
 }
+
+/*
+waitForOutput waits for the output from the Wasmtime module
+*/
 func waitForOutput() string {
 	var output string
 	for {
@@ -76,11 +79,14 @@ func waitForOutput() string {
 		if output != "" {
 			break
 		}
+		fmt.Println(output)
 	}
 	return output
 }
 
-// Read stdoutPipe and print the output
+/*
+Read the output from the stdoutPipe and save it to the buffer
+*/
 func HandleOutput(stdoutPipe io.ReadCloser) {
 	// Print the output by scanning the stdoutPipe
 	buf := make([]byte, 1024)
@@ -96,7 +102,7 @@ func HandleOutput(stdoutPipe io.ReadCloser) {
 		}
 
 		line := string(buf[:n])
-		fmt.Println("Received from Wasmtime:", line)
+		// fmt.Println("Received from Wasmtime:", line) // optional print statement
 		mu.Lock()
 		stdoutBuf.WriteString(line)
 		mu.Unlock()
@@ -106,5 +112,4 @@ func HandleOutput(stdoutPipe io.ReadCloser) {
 		fmt.Println("Error waiting for command completion:", err)
 		return
 	}
-
 }
