@@ -1,0 +1,13 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: wasm-module
+spec:
+  template:
+    spec:
+      containers:
+        - image: hong0331/wasm-module # Change the image name
+          ports:
+            - containerPort: 8080
+
+    

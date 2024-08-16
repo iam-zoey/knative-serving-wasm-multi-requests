@@ -1,4 +1,4 @@
-# R
+# WebAssembly in Knative Service 
 This project shows how to compile Go code into WebAssembly (WASM) and run it while embedded within an HTTP server The WebAssembly module, compiled from module.go, processes and prints the data it receives from HTTP server requests.
 
 ## Project Structure 
@@ -22,15 +22,35 @@ The WebAssembly module (module.go) is embedded within the HTTP server. It receiv
 GOOS=wasip1 GOARCH=wasm go build -o wasm/main.wasm wasm/module.go
 ```
 
-### Building and Running the Docker Container
+### Building and pushing the image to a registry 
 ```shell 
-docker build -t . <IMAGE_NAME>
-docker run -p 8080:8080 -t <IMAGE_NAME>
+docker build -t . <registry>/<IMAGE_NAME>
+docker push <registry>/<IMAGE_NAME>
 ```
+
+### Deploying a Knative service 
+Fix `service.yaml` with your image name (<registry>/<IMAGE_NAME>)
+```
+export FUNC_ENABLE_HOST_BUILDER=truek
+kubectl apply -f service.yaml 
+```
+
 ---
 ## Testing 
-With the server running in the Docker container, you can send HTTP requests to http://localhost:8080 for testing. If you would like to run locally, `go run main.go handle.go`
+```
+kubectl get kservice 
+```
+Copy kservice url and send request 
+```
+ curl -X POST  http://wasm-module.default.127.0.0.1.sslip.io -d "Sleep 2"
+ curl "http://wasm-module.default.127.0.0.1.sslip.io/path?input=HelloWorld"
 
+```
+
+
+#### Testing it locally 
+With the server running in your local environment with `go run main.go handle.go` command
+,  you can send HTTP requests to http://localhost:8080 for testing. 
 ```
 # Test GET method 
 curl "http://localhost:8080/path?input=HelloWorld"
