@@ -54,7 +54,7 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mu.Unlock()
-
+	go handleOutput(stdoutPipe, byteCount)
 	// Clear previous output from the buffer
 	mu.Lock()
 	stdoutBuf.Reset()
@@ -87,9 +87,9 @@ func waitForOutput() string {
 /*
 Read the output from the stdoutPipe and save it to the buffer
 */
-func HandleOutput(stdoutPipe io.ReadCloser) {
+func handleOutput(stdoutPipe io.ReadCloser, byteCount int64) {
 	// Print the output by scanning the stdoutPipe
-	buf := make([]byte, 1024)
+	buf := make([]byte, byteCount)
 	for {
 		// Read and save into buf
 		n, err := stdoutPipe.Read(buf)

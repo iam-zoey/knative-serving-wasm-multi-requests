@@ -34,12 +34,6 @@ func initModule() error {
 	// Create command
 	cmd = exec.Command("wasmtime", "wasm/main.wasm")
 
-	// Create the command to run with the specified environment variables
-	// cmd := exec.Command("go", "run", "wasm/module.go")
-
-	// // Set the environment variables
-	// cmd.Env = append(os.Environ(), "GOOS=wasip1", "GOARCH=wasm")
-
 	// Create pipes for stdin and stdout
 	stdinPipe, err = cmd.StdinPipe()
 	if err != nil {
@@ -55,7 +49,7 @@ func initModule() error {
 	}
 
 	// Handle stdout asynchronously; starting a goroutine
-	go HandleOutput(stdoutPipe) // Calling handleOutput from handle.go
+	// go HandleOutput(stdoutPipe) // Calling handleOutput from handle.go
 
 	return nil
 }
