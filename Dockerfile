@@ -1,4 +1,3 @@
-# Stage 1: Use Ubuntu to install Wasmtime
 FROM ubuntu:latest 
 # Install necessary tools
 RUN apt-get update && \
