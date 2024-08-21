@@ -54,15 +54,19 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mu.Unlock()
-	go handleOutput(stdoutPipe, byteCount)
+
 	// Clear previous output from the buffer
 	mu.Lock()
 	stdoutBuf.Reset()
 	mu.Unlock()
 
-	output := waitForOutput()
+	// Synchronously handle output from the Wasmtime module
+	go handleOutput(stdoutPipe)
 
-	// fmt.Println("Output from Wasmtime:", output) // optional print statement
+	output := waitForOutput()
+	//output := stdoutBuf.String() // Fetch output directly
+
+	fmt.Println("Output from Wasmtime:", output) // optional print statement
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(output))
 }
@@ -87,9 +91,9 @@ func waitForOutput() string {
 /*
 Read the output from the stdoutPipe and save it to the buffer
 */
-func handleOutput(stdoutPipe io.ReadCloser, byteCount int64) {
+func handleOutput(stdoutPipe io.ReadCloser) {
 	// Print the output by scanning the stdoutPipe
-	buf := make([]byte, byteCount)
+	buf := make([]byte, 1024)
 	for {
 		// Read and save into buf
 		n, err := stdoutPipe.Read(buf)
@@ -102,7 +106,7 @@ func handleOutput(stdoutPipe io.ReadCloser, byteCount int64) {
 		}
 
 		line := string(buf[:n])
-		// fmt.Println("Received from Wasmtime:", line) // optional print statement
+		fmt.Println("Received from Wasmtime:", line) // optional print statement
 		mu.Lock()
 		stdoutBuf.WriteString(line)
 		mu.Unlock()
