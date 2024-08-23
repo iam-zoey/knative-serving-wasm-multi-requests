@@ -7,7 +7,9 @@ import (
 	"net/http"
 )
 
-// Handle HTTP requests (POST, GET)
+/*
+Handle HTTP requests (POST, GET) and send input to the Wasmtime module
+*/
 func Handle(w http.ResponseWriter, r *http.Request) {
 	var input string
 	var byteCount int64
@@ -45,9 +47,8 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
 
 	data := fmt.Sprintf("%d %s\n", byteCount, input)
-	fmt.Println("Sending to Wasmtime:", data)
 
-	// Write the input to the Wasmtime module's stdin
+	// Pass input to the Wasmtime module
 	if _, err := stdinPipe.Write([]byte(data)); err != nil {
 		http.Error(w, "Error writing to Wasmtime module", http.StatusInternalServerError)
 		mu.Unlock()
@@ -64,9 +65,8 @@ func Handle(w http.ResponseWriter, r *http.Request) {
 	go handleOutput(stdoutPipe)
 
 	output := waitForOutput()
-	//output := stdoutBuf.String() // Fetch output directly
 
-	fmt.Println("Output from Wasmtime:", output) // optional print statement
+	// Pass the WASM's output to the client
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte(output))
 }

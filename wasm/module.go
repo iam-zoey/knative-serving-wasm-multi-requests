@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+/*
+Read input from standard input (stdin) and output to standard output (stdout), processing commands to either print text or sleep for a specified duration.
+*/
 func main() {
 	reader := bufio.NewReader(os.Stdin)
 	var byteCountStr []byte
@@ -57,7 +60,7 @@ func main() {
 			return
 		}
 
-		// divide the data into action and param
+		// Divide the data into action and param
 		action := strings.SplitN(string(data), " ", 2)[0]
 
 		// if action is "Sleep", sleep for the specified duration

@@ -27,7 +27,9 @@ func main() {
 	}
 }
 
-// Initialize and start the Wasmtime module with persistent input/output handling
+/*
+Initialize the Wasmtime module and create pipes for stdin and stdout
+*/
 func initModule() error {
 	var err error
 
@@ -48,15 +50,14 @@ func initModule() error {
 		return fmt.Errorf("failed to start Wasmtime module: %v", err)
 	}
 
-	// Handle stdout asynchronously; starting a goroutine
-	// go HandleOutput(stdoutPipe) // Calling handleOutput from handle.go
-
 	return nil
 }
 
-// Start the HTTP server
+/*
+Start the HTTP server and wasmtime
+*/
 func startServer() error {
-	// Initialize the Wasmtime module
+	// Initialize the Wasmtime
 	if err := initModule(); err != nil {
 		return fmt.Errorf("failed to initialize Wasmtime module: %v", err)
 	}
