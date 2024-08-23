@@ -11,6 +11,8 @@ RUN apt-get update && \
 # Install Wasmtime
 RUN curl https://wasmtime.dev/install.sh -sSf | bash
 
+WORKDIR /app 
+
 # Copy the Go modules files
 COPY . .
 
