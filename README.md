@@ -1,5 +1,7 @@
 # WebAssembly in Knative Service 
-This project shows how to compile Go code into WebAssembly (WASM) and run it while embedded within an HTTP server The WebAssembly module, compiled from module.go, processes and prints the data it receives from HTTP server requests.
+This project explores the integration of WebAssembly (WASM) within Knative Serving. The Go HTTP server handles http requests and forwards data to the WASM module via standard input. The WASM module processes the input (sleep for specific duration or print the data) and returns results through standard output, which are then sent back as the HTTP response.
+
+This model handles multiple requests to avoid the overhead of creating and initializing new instances for each request. However, it requires careful concurrency management to ensure correct processing of multiple requests and may not handle sudden spikes effectively.
 
 ## Project Structure 
 ```
@@ -11,47 +13,75 @@ This project shows how to compile Go code into WebAssembly (WASM) and run it whi
     └── module.go    # Go code for the WebAssembly module
 
 ```
-### WebAssembly Module
-The WebAssembly module (module.go) is embedded within the HTTP server. It receives data through incoming requests, processes it, and prints the received data
-
 ---
-## Getting started 
+## Getting Started 
 
-###  Compiling Go code to WebAssembly 
+### Prerequisites
+- [Wasmtime installed](https://docs.wasmtime.dev/cli-install.html) 
+-  [Knative Cluster](https://knative.dev/docs/getting-started/quickstart-install/) with a registry configured
+- Go (v 1.21+)
+
+###  Compile Go code to WASM
+To compile the Go code into a WASM binary (`.wasm`):
 ```shell 
 GOOS=wasip1 GOARCH=wasm go build -o wasm/main.wasm wasm/module.go
 ```
 
-### Building and pushing the image to a registry 
-```shell 
-docker build -t . <registry>/<IMAGE_NAME>
-docker push <registry>/<IMAGE_NAME>
+### Build and Push an image  
+Build the Docker image and push it to your container registry:
 ```
+docker build . -t <REGISTRY/IMAGE_NAME>
+docker push <REGISTRY/IMAGE_NAME>
 
-### Deploying a Knative service 
-Fix `service.yaml` with your image name (<registry>/<IMAGE_NAME>)
 ```
-export FUNC_ENABLE_HOST_BUILDER=truek
-kubectl apply -f service.yaml 
+### Apply a Knative service 
+#### Edit`service.yaml`
+Follow the `CONFIGUREME`tag and provide the name of your Docker image. 
+
+#### Apply the Knative service configuration
+After updating the service.yaml with your Docker image name, apply the configuration to your Knative cluster:
+```
+kubectl apply -f service.yaml
+```
+Once applied, you can check the service URL by running:
+```
+kubectl get kservice
 ```
 
 ---
 ## Testing 
+```shell
+# TESTING: POST  request
+curl -X POST -d "Hi WebAssembly" <SERVICE-URL>
+curl -X POST -d "Sleep 2" <SERVICE-URL>
+
+
+# TESTING: GET request
+curl "<SERVICE-URL>/?input=Hello%20from%20GET"
 ```
-kubectl get kservice 
+
+---
+
+####  Testing with Docker
+Run the container: 
 ```
-Copy kservice url and send request 
+ docker run --rm -p 8080:8080 <REGISTRY/IMAGE_NAME>
 ```
- curl -X POST  http://wasm-module.default.127.0.0.1.sslip.io -d "Sleep 2"
- curl "http://wasm-module.default.127.0.0.1.sslip.io/path?input=HelloWorld"
+Test the WASM container with GET and POST request:
+```shell 
+# TESTING: GET request 
+curl -X POST -d "Hello from curl" http://localhost:8080/
+
+# TESTING: POST request 
+curl "http://localhost:8080/?input=Hello%20from%20GET"
 
 ```
-
 
 #### Testing it locally 
-With the server running in your local environment with `go run main.go handle.go` command
-,  you can send HTTP requests to http://localhost:8080 for testing. 
+Run the following commands to test in local environment 
 ```
+go run main.go handle.go 
+
 # Test GET method 
 curl "http://localhost:8080/path?input=HelloWorld"
 

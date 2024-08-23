@@ -69,7 +69,7 @@ func main() {
 				return
 			}
 			time.Sleep(time.Duration(duration) * time.Second)
-			fmt.Printf("Slept for %d seconds\n", duration)
+			fmt.Printf("WASM says:  Slept for %d seconds\n", duration)
 
 			// Otherwise, Print the data received from the Wasmtime module
 		} else {
