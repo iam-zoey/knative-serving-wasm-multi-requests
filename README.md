@@ -11,7 +11,7 @@ This model handles multiple requests to avoid the overhead of creating and initi
 └── wasm
     ├── main.wasm    # Compiled WebAssembly binary
     └── module.go    # Go code for the WebAssembly module
-
+└── ...
 ```
 ---
 ## Getting Started 
@@ -93,4 +93,4 @@ Or you can simply run test
 ```
 go test
 ```
-Note: The test file sends multiple reqeusts for basic operation (Sleep, print), it takea a while (about a minute)
+Note: The test file sends multiple requests for basic operations (Sleep, Print). It may take a while to complete, approximately one minute.
