@@ -34,7 +34,7 @@ func initModule() error {
 	var err error
 
 	// Create command
-	cmd = exec.Command("wasmtime", "wasm/main.wasm")
+	cmd = exec.Command("wasmtime", "wasm/tiny-module.wasm")
 
 	// Create pipes for stdin and stdout
 	stdinPipe, err = cmd.StdinPipe()
